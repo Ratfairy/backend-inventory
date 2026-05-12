@@ -86,7 +86,7 @@ public class ReceiveGoodsService : IReceiveGoodsService
 
             // Update stock
             var stock = await _context.Stocks
-                .FirstOrDefaultAsync(s => s.ItemName == item.ItemName);
+                .FirstOrDefaultAsync(s => s.Item.ItemName == item.ItemName);
 
             if (stock != null)
             {

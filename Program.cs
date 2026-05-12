@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using backend_inventory.Data;
 using backend_inventory.Interfaces;
 using backend_inventory.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,11 +12,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register Services
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
-builder.Services.AddScoped<IStockOpnameService, StockOpnameService>();
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IReceiveGoodsService, ReceiveGoodsService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<ICategoryService,CategoryService>();
+builder.Services.AddScoped<IItemService,ItemService>();
 
 // CORS
 builder.Services.AddCors(options =>

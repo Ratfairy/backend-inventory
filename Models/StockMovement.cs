@@ -34,4 +34,8 @@ public class StockMovement
     // Navigasi
     [ForeignKey("StockId")]
     public Stock? Stock { get; set; }
+
+    [Column("reference_type")]
+    [MaxLength(50)]
+    public string? ReferenceType { get; set; }
 }

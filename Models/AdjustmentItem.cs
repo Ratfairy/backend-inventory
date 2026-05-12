@@ -3,15 +3,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend_inventory.Models;
 
-[Table("stock_opname_items")]
-public class StockOpnameItem
+[Table("adjustment_items")]
+public class AdjustmentItem
 {
     [Key]
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("stock_opname_id")]
-    public int StockOpnameId { get; set; }
+    [Column("adjustment_id")]
+    public int AdjustmentId { get; set; }
 
     [Column("stock_id")]
     public int StockId { get; set; }
@@ -22,12 +22,12 @@ public class StockOpnameItem
     [Column("actual_qty")]
     public int ActualQty { get; set; }
 
-    [Column("adjustment")]
-    public int Adjustment { get; set; }
+    [Column("adjustment_qty")]
+    public int AdjustmentQty { get; set; }
 
-    // Navigasi
-    [ForeignKey("StockOpnameId")]
-    public StockOpname? StockOpname { get; set; }
+    // Navigation
+    [ForeignKey("AdjustmentId")]
+    public Adjustment? Adjustment { get; set; }
 
     [ForeignKey("StockId")]
     public Stock? Stock { get; set; }

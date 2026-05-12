@@ -10,4 +10,5 @@ public class StockMovementResponseDto
     public string? Description { get; set; }
     public string? Pic { get; set; }
     public DateTime Date { get; set; }
+    public string? ReferenceType { get; set; }
 }
