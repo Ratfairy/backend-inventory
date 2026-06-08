@@ -20,7 +20,7 @@ public class AdjustmentService : IAdjustmentService
         var adjustments = await _context.Adjustments
             .Include(a => a.Items)
                 .ThenInclude(ai => ai.Stock)
-                    .ThenInclude(s => s.Item)
+                    .ThenInclude(s => s!.Item)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
 
@@ -49,7 +49,7 @@ public class AdjustmentService : IAdjustmentService
         var adjustment = await _context.Adjustments
             .Include(a => a.Items)
                 .ThenInclude(ai => ai.Stock)
-                    .ThenInclude(s => s.Item)
+                    .ThenInclude(s => s!.Item)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (adjustment == null)
@@ -81,15 +81,16 @@ public class AdjustmentService : IAdjustmentService
             throw new Exception("Item adjustment wajib diisi");
 
         var duplicateStock = dto.Items
-        .GroupBy(x => x.StockId)
-        .Any(g => g.Count() > 1);
+            .GroupBy(x => x.StockId)
+            .Any(g => g.Count() > 1);
 
-            if (duplicateStock)
-            {
-                throw new Exception(
-                    "Stock yang sama tidak boleh dipilih lebih dari sekali"
-                );
-            }
+        if (duplicateStock)
+        {
+            throw new Exception(
+                "Stock yang sama tidak boleh dipilih lebih dari sekali"
+            );
+        }
+
         var stockIds = dto.Items
             .Select(x => x.StockId)
             .Distinct()
@@ -149,7 +150,7 @@ public class AdjustmentService : IAdjustmentService
         var adjustment = await _context.Adjustments
             .Include(a => a.Items)
                 .ThenInclude(ai => ai.Stock)
-                    .ThenInclude(s => s.Item)
+                    .ThenInclude(s => s!.Item)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (adjustment == null)

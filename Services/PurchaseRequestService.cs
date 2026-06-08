@@ -58,6 +58,9 @@ public class PurchaseRequestService : IPurchaseRequestService
 
     public async Task<PRResponseDto> CreatePRAsync(CreatePRDto dto)
     {
+        if (dto.Items == null || !dto.Items.Any())
+            throw new Exception("Item PR wajib diisi");
+
         // Generate PR Number
         var count = await _context.PurchaseRequests.CountAsync();
         var prNumber = $"PR-{DateTime.Now:yyyy}-{(count + 1):D3}";
@@ -97,6 +100,9 @@ public class PurchaseRequestService : IPurchaseRequestService
         if (pr.Status != "DRAFT")
             throw new Exception("PR hanya bisa diedit saat status DRAFT");
 
+        if (dto.Items == null || !dto.Items.Any())
+            throw new Exception("Item PR wajib diisi");
+
         pr.Department = dto.Department;
         pr.Pic = dto.Pic;
         pr.NeededDate = dto.NeededDate;
@@ -125,6 +131,13 @@ public class PurchaseRequestService : IPurchaseRequestService
             .FirstOrDefaultAsync(pr => pr.Id == id);
 
         if (pr == null) return null;
+
+        if (dto.Status == "WAITING_APPROVAL" && pr.Status != "DRAFT")
+            throw new Exception("PR hanya bisa diajukan dari status DRAFT");
+
+        if ((dto.Status == "APPROVED" || dto.Status == "REJECTED") &&
+            pr.Status != "WAITING_APPROVAL")
+            throw new Exception("PR hanya bisa diproses setelah WAITING_APPROVAL");
 
         pr.Status = dto.Status;
         pr.Comment = dto.Comment;

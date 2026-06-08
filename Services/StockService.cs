@@ -107,6 +107,11 @@ public class StockService : IStockService
         if (item.Status != "APPROVED")
             throw new Exception("Item belum di-approve");
 
+        if (dto.MinQty > dto.Qty)
+            throw new Exception(
+                "Minimum qty tidak boleh lebih besar dari stock qty"
+            );
+
         var stockExists = await _context.Stocks
             .AnyAsync(s => s.ItemId == dto.ItemId);
 
@@ -238,7 +243,7 @@ public class StockService : IStockService
     {
         return await _context.StockMovements
             .Include(m => m.Stock)
-            .ThenInclude(s => s.Item)
+            .ThenInclude(s => s!.Item)
             .OrderByDescending(m => m.Date)
             .Select(m => new StockMovementResponseDto
             {
@@ -266,7 +271,7 @@ public class StockService : IStockService
     {
         return await _context.StockMovements
             .Include(m => m.Stock)
-            .ThenInclude(s => s.Item)
+            .ThenInclude(s => s!.Item)
             .Where(m => m.StockId == stockId)
             .OrderByDescending(m => m.Date)
             .Select(m => new StockMovementResponseDto
@@ -299,6 +304,9 @@ public class StockService : IStockService
 
         if (stock == null)
             throw new Exception("Stock tidak ditemukan");
+
+        if (dto.Qty <= 0)
+            throw new Exception("Qty movement harus lebih besar dari 0");
 
         if (dto.Type != "IN" && dto.Type != "OUT")
             throw new Exception("Type movement tidak valid");

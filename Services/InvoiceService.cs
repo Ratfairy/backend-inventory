@@ -150,6 +150,9 @@ public class InvoiceService : IInvoiceService
 
         if (invoice == null) return null;
 
+        if (invoice.Status != "DRAFT")
+            throw new Exception("Invoice hanya bisa dikirim dari status DRAFT");
+
         invoice.Status = dto.Status;
         await _context.SaveChangesAsync();
 
@@ -158,11 +161,15 @@ public class InvoiceService : IInvoiceService
 
     public async Task<bool> DeleteInvoiceAsync(int id)
     {
-        var invoice = await _context.Invoices.FindAsync(id);
+        var invoice = await _context.Invoices
+            .Include(inv => inv.Items)
+            .FirstOrDefaultAsync(inv => inv.Id == id);
+
         if (invoice == null) return false;
         if (invoice.Status != "DRAFT")
             throw new Exception("Invoice hanya bisa dihapus saat status DRAFT");
 
+        _context.InvoiceItems.RemoveRange(invoice.Items);
         _context.Invoices.Remove(invoice);
         await _context.SaveChangesAsync();
         return true;

@@ -8,9 +8,11 @@ public class CreateStockMovementDto
     public int StockId { get; set; }
 
     [Required]
+    [RegularExpression("^(IN|OUT)$", ErrorMessage = "Type harus IN atau OUT")]
     public string Type { get; set; } = string.Empty;
 
     [Required]
+    [Range(1, int.MaxValue)]
     public int Qty { get; set; }
 
     public string? Description { get; set; }

@@ -15,7 +15,7 @@ public class ConfirmReceiveItemDto
     public int ReceiveGoodsItemId { get; set; }
 
     [Required]
-    [Range(0, int.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int QtyReceived { get; set; }
 
     [MaxLength(255)]

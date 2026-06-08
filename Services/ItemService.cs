@@ -144,6 +144,14 @@ public class ItemService : IItemService
         if (item == null)
             return null;
 
+        var categoryExists = await _context.Categories
+            .AnyAsync(c => c.Id == dto.CategoryId);
+
+        if (!categoryExists)
+            throw new Exception(
+                "Category tidak ditemukan"
+            );
+
         var duplicate = await _context.Items
             .AnyAsync(i =>
                 i.Id != id &&

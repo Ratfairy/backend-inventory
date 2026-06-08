@@ -72,6 +72,16 @@ public class ReceiveGoodsService : IReceiveGoodsService
         if (rg.Status == "RECEIVED")
             throw new Exception("Barang sudah diterima semua");
 
+        if (rg.PurchaseOrder?.Status != "SENT")
+            throw new Exception("PO harus berstatus SENT sebelum barang diterima");
+
+        var duplicateItems = dto.Items
+            .GroupBy(i => i.ReceiveGoodsItemId)
+            .Any(g => g.Count() > 1);
+
+        if (duplicateItems)
+            throw new Exception("Item receive goods tidak boleh duplikat");
+
         foreach (var confirmItem in dto.Items)
         {
             var item = rg.Items.FirstOrDefault(i => i.Id == confirmItem.ReceiveGoodsItemId)
@@ -86,24 +96,26 @@ public class ReceiveGoodsService : IReceiveGoodsService
 
             // Update stock
             var stock = await _context.Stocks
+                .Include(s => s.Item)
                 .FirstOrDefaultAsync(s => s.Item.ItemName == item.ItemName);
 
-            if (stock != null)
-            {
-                stock.Qty += confirmItem.QtyReceived;
-                stock.UpdatedAt = DateTime.UtcNow;
+            if (stock == null)
+                throw new Exception($"Stock untuk item {item.ItemName} tidak ditemukan");
 
-                // Catat stock movement
-                _context.StockMovements.Add(new StockMovement
-                {
-                    StockId = stock.Id,
-                    Type = "IN",
-                    Qty = confirmItem.QtyReceived,
-                    Description = $"Receive Goods dari PO {rg.PurchaseOrder?.PoNumber}",
-                    Pic = rg.PurchaseOrder?.PurchaseRequest?.Pic,
-                    Date = DateTime.UtcNow,
-                });
-            }
+            stock.Qty += confirmItem.QtyReceived;
+            stock.UpdatedAt = DateTime.UtcNow;
+
+            // Catat stock movement
+            _context.StockMovements.Add(new StockMovement
+            {
+                StockId = stock.Id,
+                Type = "IN",
+                Qty = confirmItem.QtyReceived,
+                Description = $"Receive Goods dari PO {rg.PurchaseOrder?.PoNumber}",
+                Pic = rg.PurchaseOrder?.PurchaseRequest?.Pic,
+                Date = DateTime.UtcNow,
+                ReferenceType = "RECEIVE_GOODS",
+            });
         }
 
         // Update status receive goods

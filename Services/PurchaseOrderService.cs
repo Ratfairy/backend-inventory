@@ -89,6 +89,9 @@ public class PurchaseOrderService : IPurchaseOrderService
 
     public async Task<POResponseDto> CreatePOAsync(CreatePODto dto)
     {
+        if (dto.Items == null || !dto.Items.Any())
+            throw new Exception("Item PO wajib diisi");
+
         var pr = await _context.PurchaseRequests
             .Include(pr => pr.PurchaseOrder)
             .FirstOrDefaultAsync(pr => pr.Id == dto.PurchaseRequestId)
@@ -147,11 +150,16 @@ public class PurchaseOrderService : IPurchaseOrderService
     {
         var po = await _context.PurchaseOrders
             .Include(po => po.Items)
+            .Include(po => po.ReceiveGoods)
+                .ThenInclude(rg => rg!.Items)
             .FirstOrDefaultAsync(po => po.Id == id);
 
         if (po == null) return null;
         if (po.Status != "DRAFT")
             throw new Exception("PO hanya bisa diedit saat status DRAFT");
+
+        if (dto.Items == null || !dto.Items.Any())
+            throw new Exception("Item PO wajib diisi");
 
         po.Supplier = dto.Supplier;
 
@@ -165,6 +173,21 @@ public class PurchaseOrderService : IPurchaseOrderService
             Reason = i.Reason,
             PurchaseOrderId = id,
         }).ToList();
+
+        if (po.ReceiveGoods != null)
+        {
+            _context.ReceiveGoodsItems.RemoveRange(po.ReceiveGoods.Items);
+            po.ReceiveGoods.Items = dto.Items.Select(i => new ReceiveGoodsItem
+            {
+                ItemName = i.ItemName,
+                QtyOrdered = i.Qty,
+                QtyReceived = 0,
+                Unit = i.Unit,
+                ReceiveGoodsId = po.ReceiveGoods.Id,
+            }).ToList();
+            po.ReceiveGoods.Status = "PENDING";
+            po.ReceiveGoods.ReceivedDate = null;
+        }
 
         await _context.SaveChangesAsync();
 
@@ -180,6 +203,9 @@ public class PurchaseOrderService : IPurchaseOrderService
 
         if (po == null) return null;
 
+        if (po.Status != "DRAFT")
+            throw new Exception("PO hanya bisa dikirim dari status DRAFT");
+
         po.Status = dto.Status;
         await _context.SaveChangesAsync();
 
@@ -188,11 +214,23 @@ public class PurchaseOrderService : IPurchaseOrderService
 
     public async Task<bool> DeletePOAsync(int id)
     {
-        var po = await _context.PurchaseOrders.FindAsync(id);
+        var po = await _context.PurchaseOrders
+            .Include(po => po.Items)
+            .Include(po => po.ReceiveGoods)
+                .ThenInclude(rg => rg!.Items)
+            .FirstOrDefaultAsync(po => po.Id == id);
+
         if (po == null) return false;
         if (po.Status != "DRAFT")
             throw new Exception("PO hanya bisa dihapus saat status DRAFT");
 
+        if (po.ReceiveGoods != null)
+        {
+            _context.ReceiveGoodsItems.RemoveRange(po.ReceiveGoods.Items);
+            _context.ReceiveGoods.Remove(po.ReceiveGoods);
+        }
+
+        _context.PurchaseOrderItems.RemoveRange(po.Items);
         _context.PurchaseOrders.Remove(po);
         await _context.SaveChangesAsync();
         return true;
